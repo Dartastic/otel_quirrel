@@ -1,15 +1,16 @@
-// Licensed under the Dartastic Pro Software License Agreement.
+// Licensed under the Apache License, Version 2.0
 // Copyright 2025-2026 Mindful Software LLC d/b/a Dartastic.io, All rights reserved.
 
-import 'package:dartastic_opentelemetry/dartastic_opentelemetry.dart';
+import 'package:dartastic_opentelemetry_api/dartastic_opentelemetry_api.dart';
 
 import 'otel_quirrel_suppression.dart';
 
 const _tracerName = 'dartastic_otel_libs_quirrel';
 
-Tracer _tracer() => OTel.tracerProvider().getTracer(_tracerName);
+APITracer _tracer() => OTelAPI.tracerProvider().getTracer(_tracerName);
 
 class QuirrelResult {
+  /// Creates a result.
   const QuirrelResult({
     this.jobId,
     this.queueName,
@@ -50,8 +51,13 @@ class QuirrelResult {
   final int? statusCode;
 }
 
+/// What a traced call returned: the value for the caller plus fields
+/// recorded on the span.
 class QuirrelCallResult<T> {
+  /// Creates a call result.
   const QuirrelCallResult({required this.value, this.result});
+
+  /// The value returned to the caller.
   final T value;
   final QuirrelResult? result;
 }
@@ -76,65 +82,65 @@ Future<T> tracedQuirrel<T>({
   final span = _tracer().startSpan(
     'quirrel $operation',
     kind: SpanKind.client,
-    attributes: OTel.attributesFromMap(m),
+    attributes: OTelAPI.attributesFromMap(m),
   );
   try {
     final r = await invoke();
     if (r.result != null) {
       final extras = <Attribute<Object>>[];
       if (r.result!.jobId != null) {
-        extras.add(OTel.attributeString('quirrel.job.id', r.result!.jobId!));
+        extras.add(OTelAPI.attributeString('quirrel.job.id', r.result!.jobId!));
       }
       if (r.result!.queueName != null) {
-        extras.add(OTel.attributeString(
+        extras.add(OTelAPI.attributeString(
           'quirrel.queue.name',
           r.result!.queueName!,
         ));
       }
       if (r.result!.endpoint != null) {
-        extras.add(OTel.attributeString(
+        extras.add(OTelAPI.attributeString(
           'quirrel.endpoint',
           r.result!.endpoint!,
         ));
       }
       if (r.result!.cronExpression != null) {
-        extras.add(OTel.attributeString(
+        extras.add(OTelAPI.attributeString(
           'quirrel.cron',
           r.result!.cronExpression!,
         ));
       }
       if (r.result!.scheduleType != null) {
-        extras.add(OTel.attributeString(
+        extras.add(OTelAPI.attributeString(
           'quirrel.schedule.type',
           r.result!.scheduleType!,
         ));
       }
       if (r.result!.exclusive != null) {
-        extras.add(OTel.attributeBool(
+        extras.add(OTelAPI.attributeBool(
           'quirrel.exclusive',
           r.result!.exclusive!,
         ));
       }
       if (r.result!.override != null) {
-        extras.add(OTel.attributeBool(
+        extras.add(OTelAPI.attributeBool(
           'quirrel.override',
           r.result!.override!,
         ));
       }
       if (r.result!.retryCount != null) {
-        extras.add(OTel.attributeInt(
+        extras.add(OTelAPI.attributeInt(
           'quirrel.retry.count',
           r.result!.retryCount!,
         ));
       }
       if (r.result!.runAtSec != null) {
-        extras.add(OTel.attributeInt(
+        extras.add(OTelAPI.attributeInt(
           'quirrel.run_at_sec',
           r.result!.runAtSec!,
         ));
       }
       if (r.result!.statusCode != null) {
-        extras.add(OTel.attributeInt(
+        extras.add(OTelAPI.attributeInt(
           'http.response.status_code',
           r.result!.statusCode!,
         ));
@@ -145,13 +151,13 @@ Future<T> tracedQuirrel<T>({
           );
         }
       }
-      if (extras.isNotEmpty) span.addAttributes(OTel.attributes(extras));
+      if (extras.isNotEmpty) span.addAttributes(OTelAPI.attributes(extras));
     }
     return r.value;
   } catch (e, st) {
-    span.addAttributes(OTel.attributes([
-      OTel.attributeString(
-        ErrorResource.errorType.key,
+    span.addAttributes(OTelAPI.attributes([
+      OTelAPI.attributeString(
+        ErrorAttributes.errorType.key,
         e.runtimeType.toString(),
       ),
     ]));
